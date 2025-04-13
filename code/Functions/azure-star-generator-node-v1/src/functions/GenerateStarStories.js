@@ -1,16 +1,30 @@
+const { AzureKeyCredential } = require("@azure/core-auth");
+const { DefaultAzureCredential, getBearerTokenProvider } = require("@azure/identity");
+
+const { AzureOpenAI } = require("openai");
+
 const { app } = require('@azure/functions');
 
 // 👇 Use this with the latest SDK
-const AzureOpenAI = require("openai");
+// const AzureOpenAI = require("openai");
 
-const { AzureKeyCredential } = require("@azure/core-auth");
+// const { AzureKeyCredential } = require("@azure/core-auth");
+
+
+const credential = new DefaultAzureCredential();
+const scope = "https://cognitiveservices.azure.com/.default";
+const azureADTokenProvider = getBearerTokenProvider(credential, scope);
+
+
+// const deployment = "Your deployment name";
+// const apiVersion = "2024-10-21";
 
 const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
 const apiKey = process.env.AZURE_OPENAI_KEY;
 const apiVersion = process.env.OPENAI_API_VERSION;
 const deployment = process.env.CHAT_MODEL_DEPLOYMENT_NAME;
 
-const client = new AzureOpenAI({ endpoint, apiKey, apiVersion, deployment });
+const client = new AzureOpenAI({ azureADTokenProvider, deployment, apiVersion });
 
 app.http('GenerateStarStories', {
     methods: ['POST'],
@@ -36,7 +50,7 @@ app.http('GenerateStarStories', {
             context.log('Parsed request body:', { parsedData, interactionType, customPrompt });
 
             // Generate STAR stories using Azure OpenAI
-            context.log('Calling generateStoriesWithAI...');
+            context.log('Calling generateStoriesWithAI... with deployment ' + deployment);;
             const generatedStories = await generateStoriesWithAI(parsedData, interactionType, customPrompt, context);
             context.log('Successfully generated stories:', generatedStories);
 
@@ -76,16 +90,15 @@ async function generateStoriesWithAI(parsedData, interactionType, customPrompt, 
     context.log('Sending request to Azure OpenAI...');
     let response;
     try {
-        // Correct method to call Azure OpenAI completions
-        response = await client.completions.create(deployment, {
-            prompt,
-            maxTokens: 1500,
-            temperature: 0.7,
-            topP: 0.95,
-            stop: ["\n\n"]
+        // Correct method to call Azure OpenAI chat completions
+        response = await client.chat.completions.create({
+            messages: [
+                { role: "system", content: "You are a helpful assistant helping me craft professional stories about myself." },
+                { role: "user", content: prompt }
+            ],
+            model: deployment
         });
     } catch (error) {
-        context.log('Error while calling Azure OpenAI:', error);
         context.log('Error while calling Azure OpenAI:', error);
         throw new Error('Failed to get a response from Azure OpenAI');
     }
@@ -97,7 +110,7 @@ async function generateStoriesWithAI(parsedData, interactionType, customPrompt, 
     }
     context.log('Response from Azure OpenAI:', response);
 
-    const completion = response.choices?.[0]?.text?.trim();
+    const completion = response.choices?.[0]?.message;
     if (!completion) {
         context.log('No response text received from Azure OpenAI.');
         throw new Error("No response from Azure OpenAI");
