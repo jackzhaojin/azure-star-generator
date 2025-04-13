@@ -5,7 +5,7 @@
 
 /**
  * Generate STAR stories via API
- * @param {string} interactionType - The type of interaction (e.g., 'top10', 'leadership')
+ * @param {string} interactionType - The type of interaction (e.g., 'top5', 'leadership')
  * @param {string} customPrompt - Optional custom prompt for story generation
  * @returns {Promise} - Promise resolving to generated stories
  */
@@ -73,8 +73,8 @@ function getAudienceLabelText(interactionType) {
             return 'Stories tailored for job interviews and career advancement';
         case 'custom':
             return 'Custom stories based on your specifications';
-        case 'top10':
-            return 'Top 10 stories for interview preparation';
+        case 'top5':
+            return 'Top 5 stories for interview preparation';
         case 'leadership':
             return 'Stories focused on leadership & management skills';
         case 'technical':

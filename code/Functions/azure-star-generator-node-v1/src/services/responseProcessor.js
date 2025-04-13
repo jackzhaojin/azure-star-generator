@@ -1,85 +1,131 @@
 /**
- * Main service for STAR story generation
- * Orchestrates the process of generating stories
+ * Response Processor for STAR story generation
+ * Handles parsing, validation, and processing of AI responses
  */
-const openAIDao = require('../dao/openAIDao');
-const promptBuilder = require('./promptBuilder');
-const responseProcessor = require('./responseProcessor');
-const { estimateTokenCount } = require('../utils/tokenUtil');
 
 /**
- * Generate STAR stories using Azure OpenAI
- * @param {Array} parsedData - Array of feedback data objects
- * @param {string} interactionType - Type of audience for the stories
- * @param {string} customPrompt - Additional custom instructions
- * @param {Object} context - Azure Functions context for logging
- * @returns {Array} - Generated stories
+ * Process raw AI response into structured stories
+ * @param {string} responseText - Raw text response from AI
+ * @returns {Array} - Array of validated story objects
  */
-async function generateStories(parsedData, interactionType, customPrompt, context) {
+function processResponse(responseText) {
     try {
-        context.log('Starting story generation process...');
-        context.log(`Input: ${parsedData.length} data entries, interaction type: ${interactionType}`);
+        // Parse the response into structured stories
+        const stories = parseAIResponse(responseText);
         
-        // Step 1: Build the prompt using the prompt builder
-        const prompt = promptBuilder.buildPrompt(parsedData, interactionType, customPrompt);
+        if (!stories || stories.length === 0) {
+            throw new Error('No valid stories were parsed from the response');
+        }
         
-        // Log the generated prompt and token estimation
-        const tokenCount = estimateTokenCount(prompt);
-        context.log(`Generated prompt with estimated ${tokenCount} tokens`);
+        // Validate and enhance each story
+        return validateStories(stories);
+    } catch (error) {
+        throw new Error(`Failed to process AI response: ${error.message}`);
+    }
+}
+
+/**
+ * Parse AI response into structured stories
+ * @param {string} responseText - Raw text response from AI
+ * @returns {Array} - Array of structured story objects
+ */
+function parseAIResponse(responseText) {
+    try {
+        // Try to extract JSON if it's wrapped in other text
+        let jsonText = responseText;
         
-        // Step 2: Prepare messages for the OpenAI API
-        const messages = prepareMessages(prompt);
+        // Look for JSON array brackets if the response contains other text
+        const jsonStartIndex = responseText.indexOf('[');
+        const jsonEndIndex = responseText.lastIndexOf(']');
         
-        // Step 3: Call the OpenAI API via the DAO
-        context.log('Calling Azure OpenAI API...');
-        const response = await openAIDao.generateCompletion(messages, context);
+        if (jsonStartIndex >= 0 && jsonEndIndex > jsonStartIndex) {
+            jsonText = responseText.substring(jsonStartIndex, jsonEndIndex + 1);
+        }
         
-        // Step 4: Extract the completion content
-        const completionContent = extractCompletionContent(response);
-        context.log('Successfully received response from Azure OpenAI');
+        // Parse the JSON
+        const stories = JSON.parse(jsonText);
         
-        // Step 5: Process the response to get structured stories
-        const stories = responseProcessor.processResponse(completionContent, context);
-        context.log(`Successfully processed ${stories.length} stories`);
+        // Validate that we have an array
+        if (!Array.isArray(stories)) {
+            throw new Error('Response is not a valid array');
+        }
         
         return stories;
     } catch (error) {
-        context.log.error('Error in story generation process:', error);
-        throw new Error(`Story generation failed: ${error.message}`);
+        // Fallback to the text parsing method if JSON parsing fails
+        return parseAIResponseText(responseText);
     }
 }
 
 /**
- * Prepare messages for the OpenAI API
- * @param {string} prompt - The generated prompt
- * @returns {Array} - Array of message objects
+ * Fallback method to parse AI response as text if JSON parsing fails
+ * @param {string} responseText - Raw text response from AI
+ * @returns {Array} - Array of structured story objects
  */
-function prepareMessages(prompt) {
-    return [
-        { 
-            role: "system", 
-            content: "You are a helpful assistant helping me craft professional stories about myself. You excel at formatting responses as JSON when requested."
-        },
-        { 
-            role: "user", 
-            content: prompt 
+function parseAIResponseText(responseText) {
+    const stories = [];
+    const chunks = responseText.split(/\n\s*\n/); // Split by empty lines
+    
+    for (const chunk of chunks) {
+        // Try to extract STAR components
+        const situationMatch = chunk.match(/situation:?\s*(.*?)\s*(?=task:|$)/is);
+        const taskMatch = chunk.match(/task:?\s*(.*?)\s*(?=action:|$)/is);
+        const actionMatch = chunk.match(/action:?\s*(.*?)\s*(?=result:|$)/is);
+        const resultMatch = chunk.match(/result:?\s*(.*)\s*$/is);
+        
+        // If we have all four components, add as a valid story
+        if (situationMatch && taskMatch && actionMatch && resultMatch) {
+            const story = {
+                situation: situationMatch[1].trim(),
+                task: taskMatch[1].trim(),
+                action: actionMatch[1].trim(),
+                result: resultMatch[1].trim()
+            };
+            
+            stories.push(story);
         }
-    ];
-}
-
-/**
- * Extract completion content from API response
- * @param {Object} response - The API response
- * @returns {string} - The completion content
- */
-function extractCompletionContent(response) {
-    if (!response || !response.choices || response.choices.length === 0 || !response.choices[0].message) {
-        throw new Error('Invalid or empty response from OpenAI API');
     }
     
-    return response.choices[0].message.content || '';
+    return stories;
+}
+
+/**
+ * Validate stories and filter out invalid ones
+ * @param {Array} stories - Array of story objects
+ * @returns {Array} - Array of validated story objects
+ */
+function validateStories(stories) {
+    // Filter out invalid stories
+    return stories.filter(story => {
+        return story && 
+            typeof story === 'object' &&
+            typeof story.situation === 'string' && story.situation.trim() !== '' &&
+            typeof story.task === 'string' && story.task.trim() !== '' &&
+            typeof story.action === 'string' && story.action.trim() !== '' &&
+            typeof story.result === 'string' && story.result.trim() !== '';
+    }).map(story => {
+        // Normalize text in each field
+        return {
+            situation: normalizeText(story.situation),
+            task: normalizeText(story.task),
+            action: normalizeText(story.action),
+            result: normalizeText(story.result)
+        };
+    });
+}
+
+/**
+ * Normalize text by trimming and standardizing whitespace
+ * @param {string} text - The text to normalize
+ * @returns {string} - Normalized text
+ */
+function normalizeText(text) {
+    if (!text) return '';
+    
+    // Replace multiple spaces with a single space
+    return text.trim().replace(/\s+/g, ' ');
 }
 
 module.exports = {
-    generateStories
+    processResponse
 };
