@@ -166,6 +166,249 @@
                 <span class="azure-badge">Professional Storytelling Tool</span>
             </div>
         </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const feedbackForm = document.getElementById('feedbackForm');
+            const csvFileInput = document.getElementById('csvFile');
+            const fileInfo = document.getElementById('fileInfo');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const resultContainer = document.getElementById('resultContainer');
+            const infoContainer = document.getElementById('infoContainer');
+            const csvInfoContainer = document.getElementById('csvInfoContainer');
+            const interactionType = document.getElementById('interactionType');
+            const customOptions = document.getElementById('customOptions');
+            const copyBtn = document.getElementById('copyBtn');
+            const regenerateBtn = document.getElementById('regenerateBtn');
+            const prevStoryBtn = document.getElementById('prevStory');
+            const nextStoryBtn = document.getElementById('nextStory');
+            const currentStorySpan = document.getElementById('currentStory');
+            const totalStoriesSpan = document.getElementById('totalStories');
+            const audienceLabel = document.getElementById('audienceLabel');
+            
+            // STAR elements
+            const situationText = document.getElementById('situationText');
+            const taskText = document.getElementById('taskText');
+            const actionText = document.getElementById('actionText');
+            const resultText = document.getElementById('resultText');
+            
+            // State variables
+            let csvData = null;
+            let parsedData = null;
+            let generatedStories = [];
+            let currentStoryIndex = 0;
+            
+            // Show custom options if the custom option is selected
+            interactionType.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customOptions.style.display = 'block';
+                } else {
+                    customOptions.style.display = 'none';
+                }
+            });
+            
+            // Update file info when a file is selected
+            csvFileInput.addEventListener('change', function(e) {
+                const fileName = e.target.files[0]?.name;
+                if (fileName) {
+                    fileInfo.textContent = fileName;
+                    readCSVFile(e.target.files[0]);
+                } else {
+                    fileInfo.textContent = 'No file selected';
+                    csvData = null;
+                }
+            });
+            
+            // Read the CSV file
+            function readCSVFile(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    csvData = e.target.result;
+                    console.log("CSV file loaded successfully");
+                };
+                reader.onerror = function() {
+                    console.error("Error reading file");
+                    csvData = null;
+                };
+                reader.readAsText(file);
+            }
+            
+            // Handle form submission
+            feedbackForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                if (!csvData) {
+                    alert('Please upload a CSV file first.');
+                    return;
+                }
+                
+                // Show loading spinner
+                loadingSpinner.style.display = 'block';
+                
+                try {
+                    // Step 1: Process the CSV data
+                    const csvResponse = await fetch('/api/ProcessCsvData', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            csvData: csvData
+                        })
+                    });
+                    
+                    if (!csvResponse.ok) {
+                        throw new Error('Failed to process CSV data');
+                    }
+                    
+                    const csvResult = await csvResponse.json();
+                    
+                    if (!csvResult.success) {
+                        throw new Error(csvResult.error || 'Failed to process CSV data');
+                    }
+                    
+                    parsedData = csvResult.data;
+                    
+                    // Step 2: Generate STAR stories
+                    const type = interactionType.value;
+                    const customPrompt = document.getElementById('customPrompt').value;
+                    
+                    // Set appropriate audience label
+                    switch(type) {
+                        case 'colleague':
+                            audienceLabel.textContent = 'Stories tailored for sharing with colleagues';
+                            break;
+                        case 'client':
+                            audienceLabel.textContent = 'Stories tailored for potential clients';
+                            break;
+                        case 'employer':
+                            audienceLabel.textContent = 'Stories tailored for job interviews and career advancement';
+                            break;
+                        case 'custom':
+                            audienceLabel.textContent = 'Custom stories based on your specifications';
+                            break;
+                        default:
+                            audienceLabel.textContent = 'Stories tailored for your chosen audience';
+                    }
+                    
+                    const storiesResponse = await fetch('/api/GenerateStarStories', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            parsedData: parsedData,
+                            interactionType: type,
+                            customPrompt: customPrompt
+                        })
+                    });
+                    
+                    if (!storiesResponse.ok) {
+                        throw new Error('Failed to generate stories');
+                    }
+                    
+                    const storiesResult = await storiesResponse.json();
+                    
+                    if (!storiesResult.success) {
+                        throw new Error(storiesResult.error || 'Failed to generate stories');
+                    }
+                    
+                    // Update the UI with the generated STAR stories
+                    generatedStories = storiesResult.stories;
+                    totalStoriesSpan.textContent = generatedStories.length;
+                    currentStoryIndex = 0;
+                    updateCurrentStoryView();
+                    
+                    // Hide info container and csv info container, show result container
+                    infoContainer.style.display = 'none';
+                    csvInfoContainer.style.display = 'none';
+                    resultContainer.style.display = 'block';
+                    
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                } finally {
+                    // Hide loading spinner
+                    loadingSpinner.style.display = 'none';
+                }
+            });
+            
+            // Update the current story view
+            function updateCurrentStoryView() {
+                if (generatedStories.length === 0) return;
+                
+                const currentStory = generatedStories[currentStoryIndex];
+                situationText.textContent = currentStory.situation;
+                taskText.textContent = currentStory.task;
+                actionText.textContent = currentStory.action;
+                resultText.textContent = currentStory.result;
+                
+                currentStorySpan.textContent = currentStoryIndex + 1;
+                
+                // Update navigation buttons
+                prevStoryBtn.disabled = currentStoryIndex === 0;
+                nextStoryBtn.disabled = currentStoryIndex === generatedStories.length - 1;
+            }
+            
+            // Previous story button
+            prevStoryBtn.addEventListener('click', function() {
+                if (currentStoryIndex > 0) {
+                    currentStoryIndex--;
+                    updateCurrentStoryView();
+                }
+            });
+            
+            // Next story button
+            nextStoryBtn.addEventListener('click', function() {
+                if (currentStoryIndex < generatedStories.length - 1) {
+                    currentStoryIndex++;
+                    updateCurrentStoryView();
+                }
+            });
+            
+            // Copy functionality
+            copyBtn.addEventListener('click', function() {
+                if (generatedStories.length === 0) return;
+                
+                const currentStory = generatedStories[currentStoryIndex];
+                const starStory = `SITUATION:
+${currentStory.situation}
+
+TASK:
+${currentStory.task}
+
+ACTION:
+${currentStory.action}
+
+RESULT:
+${currentStory.result}`;
+                
+                navigator.clipboard.writeText(starStory)
+                    .then(() => {
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Could not copy text: ', err);
+                    });
+            });
+            
+            // Regenerate button
+            regenerateBtn.addEventListener('click', function() {
+                if (confirm('This will regenerate all stories. Continue?')) {
+                    feedbackForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+        </div>
         
         <div class="row">
             <div class="col-md-6">
@@ -346,222 +589,3 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Elements
-            const feedbackForm = document.getElementById('feedbackForm');
-            const csvFileInput = document.getElementById('csvFile');
-            const fileInfo = document.getElementById('fileInfo');
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            const resultContainer = document.getElementById('resultContainer');
-            const infoContainer = document.getElementById('infoContainer');
-            const csvInfoContainer = document.getElementById('csvInfoContainer');
-            const interactionType = document.getElementById('interactionType');
-            const customOptions = document.getElementById('customOptions');
-            const copyBtn = document.getElementById('copyBtn');
-            const regenerateBtn = document.getElementById('regenerateBtn');
-            const prevStoryBtn = document.getElementById('prevStory');
-            const nextStoryBtn = document.getElementById('nextStory');
-            const currentStorySpan = document.getElementById('currentStory');
-            const totalStoriesSpan = document.getElementById('totalStories');
-            const audienceLabel = document.getElementById('audienceLabel');
-            
-            // STAR elements
-            const situationText = document.getElementById('situationText');
-            const taskText = document.getElementById('taskText');
-            const actionText = document.getElementById('actionText');
-            const resultText = document.getElementById('resultText');
-            
-            // State variables
-            let csvData = null;
-            let generatedStories = [];
-            let currentStoryIndex = 0;
-            
-            // Show custom options if the custom option is selected
-            interactionType.addEventListener('change', function() {
-                if (this.value === 'custom') {
-                    customOptions.style.display = 'block';
-                } else {
-                    customOptions.style.display = 'none';
-                }
-            });
-            
-            // Update file info when a file is selected
-            csvFileInput.addEventListener('change', function(e) {
-                const fileName = e.target.files[0]?.name;
-                if (fileName) {
-                    fileInfo.textContent = fileName;
-                    readCSVFile(e.target.files[0]);
-                } else {
-                    fileInfo.textContent = 'No file selected';
-                    csvData = null;
-                }
-            });
-            
-            // Read the CSV file
-            function readCSVFile(file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    csvData = e.target.result;
-                    console.log("CSV file loaded successfully");
-                };
-                reader.onerror = function() {
-                    console.error("Error reading file");
-                    csvData = null;
-                };
-                reader.readAsText(file);
-            }
-            
-            // Handle form submission
-            feedbackForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                if (!csvData) {
-                    alert('Please upload a CSV file first.');
-                    return;
-                }
-                
-                // Show loading spinner
-                loadingSpinner.style.display = 'block';
-                
-                // Get interaction type
-                const type = interactionType.value;
-                const customPrompt = document.getElementById('customPrompt').value;
-                
-                // Set appropriate audience label
-                switch(type) {
-                    case 'colleague':
-                        audienceLabel.textContent = 'Stories tailored for sharing with colleagues';
-                        break;
-                    case 'client':
-                        audienceLabel.textContent = 'Stories tailored for potential clients';
-                        break;
-                    case 'employer':
-                        audienceLabel.textContent = 'Stories tailored for job interviews and career advancement';
-                        break;
-                    case 'custom':
-                        audienceLabel.textContent = 'Custom stories based on your specifications';
-                        break;
-                    default:
-                        audienceLabel.textContent = 'Stories tailored for your chosen audience';
-                }
-                
-                try {
-                    // Call the Azure Function API
-                    const response = await fetch(window.location.href, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            csvData: csvData,
-                            interactionType: type,
-                            customPrompt: customPrompt
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Failed to generate stories');
-                    }
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        // Update the UI with the generated STAR stories
-                        generatedStories = data.stories;
-                        totalStoriesSpan.textContent = generatedStories.length;
-                        currentStoryIndex = 0;
-                        updateCurrentStoryView();
-                        
-                        // Hide info container and csv info container, show result container
-                        infoContainer.style.display = 'none';
-                        csvInfoContainer.style.display = 'none';
-                        resultContainer.style.display = 'block';
-                    } else {
-                        throw new Error(data.error || 'Failed to generate stories');
-                    }
-                } catch (error) {
-                    alert('Error: ' + error.message);
-                } finally {
-                    // Hide loading spinner
-                    loadingSpinner.style.display = 'none';
-                }
-            });
-            
-            // Update the current story view
-            function updateCurrentStoryView() {
-                if (generatedStories.length === 0) return;
-                
-                const currentStory = generatedStories[currentStoryIndex];
-                situationText.textContent = currentStory.situation;
-                taskText.textContent = currentStory.task;
-                actionText.textContent = currentStory.action;
-                resultText.textContent = currentStory.result;
-                
-                currentStorySpan.textContent = currentStoryIndex + 1;
-                
-                // Update navigation buttons
-                prevStoryBtn.disabled = currentStoryIndex === 0;
-                nextStoryBtn.disabled = currentStoryIndex === generatedStories.length - 1;
-            }
-            
-            // Previous story button
-            prevStoryBtn.addEventListener('click', function() {
-                if (currentStoryIndex > 0) {
-                    currentStoryIndex--;
-                    updateCurrentStoryView();
-                }
-            });
-            
-            // Next story button
-            nextStoryBtn.addEventListener('click', function() {
-                if (currentStoryIndex < generatedStories.length - 1) {
-                    currentStoryIndex++;
-                    updateCurrentStoryView();
-                }
-            });
-            
-            // Copy functionality
-            copyBtn.addEventListener('click', function() {
-                if (generatedStories.length === 0) return;
-                
-                const currentStory = generatedStories[currentStoryIndex];
-                const starStory = `SITUATION:
-${currentStory.situation}
-
-TASK:
-${currentStory.task}
-
-ACTION:
-${currentStory.action}
-
-RESULT:
-${currentStory.result}`;
-                
-                navigator.clipboard.writeText(starStory)
-                    .then(() => {
-                        const originalText = copyBtn.textContent;
-                        copyBtn.textContent = 'Copied!';
-                        setTimeout(() => {
-                            copyBtn.textContent = originalText;
-                        }, 2000);
-                    })
-                    .catch(err => {
-                        console.error('Could not copy text: ', err);
-                    });
-            });
-            
-            // Regenerate button
-            regenerateBtn.addEventListener('click', function() {
-                if (confirm('This will regenerate all stories. Continue?')) {
-                    feedbackForm.dispatchEvent(new Event('submit'));
-                }
-            });
-        });
-    </script>
-</body>
-</html>
