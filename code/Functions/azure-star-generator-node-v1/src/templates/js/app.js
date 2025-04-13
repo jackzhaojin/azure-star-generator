@@ -13,6 +13,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up event listeners
     setupEventListeners();
     
+    // Load sample CSV data by default
+    loadSampleCSV().catch(error => {
+        console.error("Error loading sample CSV:", error);
+        // Don't show error to user since this is automatic initialization
+    });
+    
     console.log('STAR Story Generator initialized.');
 });
 
@@ -33,13 +39,21 @@ function setupEventListeners() {
     elements.csvFileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-            updateFileInfo(file.name);
+            updateFileInfo(file.name + " (Your File)");
             readCSVFile(file).catch(error => showError(error.message));
         } else {
-            updateFileInfo('No file selected');
+            updateFileInfo('No file selected - Sample data will be used');
             window.AppState.csvData = null;
         }
     });
+    
+    // Handle "Use sample data" button click
+    const useSampleBtn = getElement('useSampleBtn');
+    if (useSampleBtn) {
+        useSampleBtn.addEventListener('click', function() {
+            loadSampleCSV().catch(error => showError(error.message));
+        });
+    }
     
     // Handle form submission
     elements.feedbackForm.addEventListener('submit', handleFormSubmit);
@@ -82,8 +96,13 @@ async function handleFormSubmit(e) {
     e.preventDefault();
     
     if (!window.AppState.csvData) {
-        showError('Please upload a CSV file first.');
-        return;
+        // If no CSV data, load the sample data automatically
+        try {
+            await loadSampleCSV();
+        } catch (error) {
+            showError("Could not load sample data: " + error.message);
+            return;
+        }
     }
     
     // Show loading spinner

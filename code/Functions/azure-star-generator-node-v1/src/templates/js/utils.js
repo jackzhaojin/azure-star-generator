@@ -66,6 +66,13 @@ function copyToClipboard(text) {
  * @returns {string} - Formatted story text
  */
 function formatStarStory(story) {
+    let formattedAction = story.action;
+    
+    // Format action items if they're in an array
+    if (Array.isArray(story.action)) {
+        formattedAction = story.action.map(item => `• ${item}`).join('\n');
+    }
+    
     return `SITUATION:
 ${story.situation}
 
@@ -73,7 +80,7 @@ TASK:
 ${story.task}
 
 ACTION:
-${story.action}
+${formattedAction}
 
 RESULT:
 ${story.result}`;
@@ -99,6 +106,6 @@ function isValidStory(story) {
            typeof story === 'object' && 
            typeof story.situation === 'string' && 
            typeof story.task === 'string' && 
-           typeof story.action === 'string' && 
+           (typeof story.action === 'string' || Array.isArray(story.action)) && 
            typeof story.result === 'string';
 }

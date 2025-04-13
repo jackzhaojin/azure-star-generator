@@ -128,7 +128,6 @@ function showStories() {
     
     // Scroll to the results container
     scrollToElement(elements.resultContainer);
-
 }
 
 /**
@@ -167,11 +166,17 @@ async function copyCurrentStoryToClipboard() {
         // Update both desktop and mobile buttons
         const originalText = elements.copyBtn.textContent;
         elements.copyBtn.textContent = 'Copied!';
-        elements.copyBtnMobile.textContent = 'Copied!';
+        
+        // Update mobile button if it exists
+        if (elements.copyBtnMobile) {
+            elements.copyBtnMobile.textContent = 'Copied!';
+        }
         
         setTimeout(() => {
             elements.copyBtn.textContent = originalText;
-            elements.copyBtnMobile.textContent = originalText;
+            if (elements.copyBtnMobile) {
+                elements.copyBtnMobile.textContent = originalText;
+            }
         }, 2000);
     } catch (err) {
         console.error('Could not copy text: ', err);

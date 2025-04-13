@@ -37,11 +37,20 @@
                         <div class="mb-4">
                             <label class="form-label">Upload your feedback CSV file</label>
                             <div class="file-upload">
-                                <input type="file" id="csvFile" accept=".csv" required>
+                                <input type="file" id="csvFile" accept=".csv">
                                 <label for="csvFile" class="file-upload-label">
                                     <i class="fas fa-cloud-upload-alt"></i> Choose a CSV file or drag it here
                                 </label>
-                                <div id="fileInfo" class="file-upload-info">No file selected</div>
+                                <div id="fileInfo" class="file-upload-info">No file selected - Sample data will be used</div>
+                            </div>
+                            <div class="mt-2">
+                                <a href="https://jack2025storyrgbfb2.blob.core.windows.net/public/samplecsv.csv" class="text-primary" download>
+                                    <small>Download sample CSV template</small>
+                                </a>
+                                <button id="useSampleBtn" class="btn btn-sm btn-outline-primary ms-3">Use sample data</button>
+                            </div>
+                            <div class="alert alert-info mt-2" role="alert">
+                                <small>Sample data contains fictional feedback for a UX designer. The sample CSV will be used automatically if you don't upload your own file.</small>
                             </div>
                         </div>
                         
@@ -188,7 +197,7 @@
                         
                         <div class="star-section">
                             <h3>Action</h3>
-                            <p id="actionText"></p>
+                            <div id="actionText"></div>
                         </div>
                         
                         <div class="star-section">

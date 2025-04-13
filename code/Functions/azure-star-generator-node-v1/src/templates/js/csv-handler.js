@@ -29,6 +29,40 @@ function readCSVFile(file) {
 }
 
 /**
+ * Load sample CSV data from the Azure Blob Storage
+ * @returns {Promise} - Promise resolving when sample data is loaded
+ */
+async function loadSampleCSV() {
+    try {
+        // URL to the sample CSV file
+        const sampleCsvUrl = 'https://jack2025storyrgbfb2.blob.core.windows.net/public/samplecsv.csv';
+        
+        console.log("Loading sample CSV from:", sampleCsvUrl);
+        
+        // Fetch the sample CSV
+        const response = await fetch(sampleCsvUrl);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to load sample CSV: ${response.status} ${response.statusText}`);
+        }
+        
+        // Get the CSV data as text
+        const csvData = await response.text();
+        
+        // Update UI and app state
+        updateFileInfo('Sample CSV (UX Designer Feedback)');
+        window.AppState.csvData = csvData;
+        
+        console.log("Sample CSV loaded successfully", csvData.substring(0, 100) + "...");
+        
+        return csvData;
+    } catch (error) {
+        console.error("Error loading sample CSV:", error);
+        throw new Error("Failed to load sample CSV data: " + error.message);
+    }
+}
+
+/**
  * Process CSV data via API
  * @returns {Promise} - Promise resolving to parsed CSV data
  */
@@ -104,6 +138,6 @@ function validateCSVFormat(parsedData) {
 function updateFileInfo(fileName) {
     const fileInfo = getElement('fileInfo');
     if (fileInfo) {
-        fileInfo.textContent = fileName || 'No file selected';
+        fileInfo.textContent = fileName || 'No file selected - Sample data will be used';
     }
 }
