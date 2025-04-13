@@ -47,7 +47,7 @@ app.http('GenerateStarStories', {
                 }
             };
         } catch (error) {
-            context.log.error('Error generating stories:', error);
+            context.log('Error generating stories:', error);
             return {
                 status: 500,
                 jsonBody: { 
@@ -56,7 +56,7 @@ app.http('GenerateStarStories', {
                 }
             };
         } finally {
-            context.log(`Http function completed processing request`);
+            context.log(`FINALLY: Http function completed processing request`);
         }
     }
 });
@@ -74,20 +74,32 @@ async function generateStoriesWithAI(parsedData, interactionType, customPrompt, 
 
     // Log before calling Azure OpenAI
     context.log('Sending request to Azure OpenAI...');
-    const response = await client.getCompletions(deployment, {
-        prompt,
-        maxTokens: 1500,
-        temperature: 0.7,
-        topP: 0.95,
-        stop: ["\n\n"]
-    });
+    let response;
+    try {
+        // Correct method to call Azure OpenAI completions
+        response = await client.completions.create(deployment, {
+            prompt,
+            maxTokens: 1500,
+            temperature: 0.7,
+            topP: 0.95,
+            stop: ["\n\n"]
+        });
+    } catch (error) {
+        context.log('Error while calling Azure OpenAI:', error);
+        context.log('Error while calling Azure OpenAI:', error);
+        throw new Error('Failed to get a response from Azure OpenAI');
+    }
 
     // Log the raw response from Azure OpenAI
+    if (!response || !response.choices || response.choices.length === 0) {
+        context.log('Invalid or empty response from Azure OpenAI:', response);
+        throw new Error('Invalid response from Azure OpenAI');
+    }
     context.log('Response from Azure OpenAI:', response);
 
     const completion = response.choices?.[0]?.text?.trim();
     if (!completion) {
-        context.log.error('No response text received from Azure OpenAI.');
+        context.log('No response text received from Azure OpenAI.');
         throw new Error("No response from Azure OpenAI");
     }
 
