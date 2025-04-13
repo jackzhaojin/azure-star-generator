@@ -117,12 +117,9 @@ function showStories() {
     // Update the story view
     updateStoryView();
     
-    // Scroll to the results container based on screen size
-    if (window.innerWidth < 768) {
-        scrollToElement(elements.resultContainerMobile);
-    } else {
-        scrollToElement(elements.resultContainer);
-    }
+    // Scroll to the results container
+    scrollToElement(elements.resultContainer);
+
 }
 
 /**
@@ -143,25 +140,6 @@ function setLoadingState(isLoading) {
         elements.loadingSpinner.style.display = 'block';
     } else {
         elements.loadingSpinner.style.display = 'none';
-    }
-}
-
-/**
- * Handle window resize events to toggle between mobile and desktop views
- */
-function handleResize() {
-    if (window.AppState.generatedStories && window.AppState.generatedStories.length > 0) {
-        if (window.innerWidth < 768) {
-            elements.resultContainer.classList.add('d-none');
-            elements.resultContainer.classList.remove('d-block');
-            elements.resultContainerMobile.classList.add('d-block');
-            elements.resultContainerMobile.classList.remove('d-none');
-        } else {
-            elements.resultContainer.classList.add('d-block');
-            elements.resultContainer.classList.remove('d-none');
-            elements.resultContainerMobile.classList.add('d-none');
-            elements.resultContainerMobile.classList.remove('d-block');
-        }
     }
 }
 

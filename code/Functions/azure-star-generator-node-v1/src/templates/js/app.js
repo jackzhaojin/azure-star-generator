@@ -13,9 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up event listeners
     setupEventListeners();
     
-    // Set up window resize handler
-    window.addEventListener('resize', handleResize);
-    
     console.log('STAR Story Generator initialized.');
 });
 
