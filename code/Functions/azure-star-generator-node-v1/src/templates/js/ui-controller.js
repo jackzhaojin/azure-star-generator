@@ -95,7 +95,17 @@ function updateStoryView() {
     // Update desktop view
     elements.situationText.textContent = currentStory.situation;
     elements.taskText.textContent = currentStory.task;
-    elements.actionText.textContent = currentStory.action;
+    
+    // Handle action items as bullet points if it's an array
+    if (Array.isArray(currentStory.action)) {
+        const actionHtml = '<ul>' + 
+            currentStory.action.map(item => `<li>${item}</li>`).join('') + 
+            '</ul>';
+        elements.actionText.innerHTML = actionHtml;
+    } else {
+        elements.actionText.textContent = currentStory.action;
+    }
+    
     elements.resultText.textContent = currentStory.result;
     
     elements.currentStorySpan.textContent = window.AppState.currentStoryIndex + 1;
@@ -104,7 +114,6 @@ function updateStoryView() {
     // Update navigation buttons - desktop
     elements.prevStoryBtn.disabled = window.AppState.currentStoryIndex === 0;
     elements.nextStoryBtn.disabled = window.AppState.currentStoryIndex === window.AppState.generatedStories.length - 1;
-    
 }
 
 /**

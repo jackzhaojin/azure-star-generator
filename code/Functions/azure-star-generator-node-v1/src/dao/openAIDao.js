@@ -25,7 +25,6 @@ class OpenAIDao {
             apiVersion: this.apiVersion 
         });
     }
-
     /**
      * Generate completion using Azure OpenAI
      * @param {Array} messages - Array of message objects with role and content
@@ -33,9 +32,9 @@ class OpenAIDao {
      * @returns {Object} - The completion response
      */
     async generateCompletion(messages, context) {
-        // Log detailed request information
+        // Simplified logging - only log that we're sending a request
         context.log('Sending request to Azure OpenAI with deployment:', this.deployment);
-        context.log('Request messages to Azure OpenAI:', JSON.stringify(messages, null, 2));
+        context.log('Message count:', messages.length);
         
         try {
             const response = await this.client.chat.completions.create({
@@ -44,33 +43,26 @@ class OpenAIDao {
             });
 
             if (!response || !response.choices || response.choices.length === 0) {
-                context.log('Invalid or empty response from Azure OpenAI:', JSON.stringify(response, null, 2));
+                context.log('Invalid or empty response from Azure OpenAI');
                 throw new Error('Invalid response from Azure OpenAI');
             }
 
-            // Log detailed response information
+            // Simplified logging of response metadata only
             context.log('Received response from Azure OpenAI:', JSON.stringify({
                 id: response.id,
                 model: response.model,
                 usage: response.usage,
                 choicesCount: response.choices.length,
-                firstChoiceFinishReason: response.choices[0]?.finish_reason,
-                // Include a preview of the content for debugging
-                contentPreview: response.choices[0]?.message?.content?.substring(0, 200) + '...'
+                firstChoiceFinishReason: response.choices[0]?.finish_reason
             }, null, 2));
             
             return response;
         } catch (error) {
             context.log('Error while calling Azure OpenAI:', error);
             
-            // Log more detailed error info if available
+            // Log only error status if available
             if (error.response) {
-                context.log('Error response details:', JSON.stringify({
-                    status: error.response.status,
-                    statusText: error.response.statusText,
-                    headers: error.response.headers,
-                    data: error.response.data
-                }, null, 2));
+                context.log('Error response status:', error.response.status, error.response.statusText);
             }
             
             throw new Error('Failed to get a response from Azure OpenAI: ' + error.message);

@@ -6,7 +6,6 @@ const openAIDao = require('../dao/openAIDao');
 const promptBuilder = require('./promptBuilder');
 const responseProcessor = require('./responseProcessor');
 const { estimateTokenCount } = require('../utils/tokenUtil');
-
 /**
  * Generate STAR stories using Azure OpenAI
  * @param {Array} parsedData - Array of feedback data objects
@@ -17,12 +16,22 @@ const { estimateTokenCount } = require('../utils/tokenUtil');
  */
 async function generateStories(parsedData, interactionType, customPrompt, context) {
     try {
-        // Step 1: Build the prompt using the prompt builder
-        const prompt = promptBuilder.buildPrompt(parsedData, interactionType, customPrompt);
+        // Log information about the data size
+        context.log(`Processing spreadsheet with ${parsedData.length} entries. Will use a maximum of 50 entries.`);
+        
+        // Limit to max 50 entries if larger
+        const limitedData = parsedData.length > 50 ? parsedData.slice(0, 50) : parsedData;
+        
+        if (parsedData.length > 50) {
+            context.log(`Limited input data from ${parsedData.length} to 50 entries to reduce token usage`);
+        }
+        
+        // Step 1: Build the prompt using the prompt builder with limited data
+        const prompt = promptBuilder.buildPrompt(limitedData, interactionType, customPrompt);
         
         // Log token estimation
         const tokenCount = estimateTokenCount(prompt);
-        context.log(`Prompt built with estimated ${tokenCount} tokens`);
+        context.log(`Prompt built with estimated ${tokenCount} tokens for ${limitedData.length} entries`);
         
         // Step 2: Prepare messages for OpenAI API
         const messages = [

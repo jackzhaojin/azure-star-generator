@@ -112,7 +112,6 @@ function getInteractionContext(interactionType) {
     
     return { instructions, audience };
 }
-
 /**
  * Get feedback examples formatted for the prompt
  * @param {Array} parsedData - Array of feedback data objects
@@ -120,8 +119,8 @@ function getInteractionContext(interactionType) {
  * @returns {string} - Formatted feedback examples
  */
 function getFeedbackExamples(parsedData, interactionType) {
-    // Use up to 40 entries to provide comprehensive context
-    const maxEntries = 40;
+    // Limit to 50 entries maximum to avoid token issues
+    const maxEntries = 50;
     const feedbackCount = Math.min(maxEntries, parsedData.length);
     
     return parsedData.slice(0, feedbackCount).map((entry, index) => {
