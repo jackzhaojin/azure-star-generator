@@ -30,7 +30,7 @@ async function generateStories(request, context) {
         }
         
         // Log parsed request data
-        context.log('Parsed request body:', { 
+        context.log('Valid request received:', { 
             dataCount: parsedData.length, 
             interactionType, 
             hasCustomPrompt: !!customPrompt 
