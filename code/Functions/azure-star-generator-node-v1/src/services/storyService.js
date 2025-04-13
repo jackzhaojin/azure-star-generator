@@ -50,6 +50,49 @@ async function generateStories(parsedData, interactionType, customPrompt, contex
     }
 }
 
+/**
+ * Validates that a story object has all required fields in the correct format
+ * @param {Object} story - The story object to validate
+ * @returns {boolean} - Whether the story is valid
+ */
+function isValidStory(story) {
+    // Basic object validation
+    if (!story || typeof story !== 'object') {
+        return false;
+    }
+    
+    // Check situation and task are non-empty strings
+    if (typeof story.situation !== 'string' || story.situation.trim() === '' ||
+        typeof story.task !== 'string' || story.task.trim() === '') {
+        return false;
+    }
+    
+    // Check result is a non-empty string
+    if (typeof story.result !== 'string' || story.result.trim() === '') {
+        return false;
+    }
+    
+    // Check action is either a non-empty string or an array of non-empty strings
+    if (Array.isArray(story.action)) {
+        // Must have at least one action item
+        if (story.action.length === 0) {
+            return false;
+        }
+        
+        // All action items must be non-empty strings
+        for (const item of story.action) {
+            if (typeof item !== 'string' || item.trim() === '') {
+                return false;
+            }
+        }
+    } else if (typeof story.action !== 'string' || story.action.trim() === '') {
+        // If not an array, must be a non-empty string
+        return false;
+    }
+    
+    return true;
+}
+
 module.exports = {
     generateStories
 };

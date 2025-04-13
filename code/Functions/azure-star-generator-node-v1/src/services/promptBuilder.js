@@ -18,22 +18,22 @@ function buildPrompt(parsedData, interactionType, customPrompt) {
     const basePrompt = `You are an expert in crafting professional STAR (Situation, Task, Action, Result) stories. 
     Create compelling and authentic narratives based on the following feedback data that I've received.
     
-    Each story must follow this structure:
-    - Situation: Concisely set the context with specific details about the challenge or opportunity
-    - Task: Clearly explain my specific responsibilities or objectives in this situation
-    - Action: Detail the specific steps I took, focusing on MY individual contribution even in team settings
-    - Result: Quantify the positive outcomes where possible and link them directly to my actions
+    Each story must follow this specific structure:
+    - Situation: Exactly ONE concise sentence that sets the context with specific details about the challenge or opportunity. Be specific and quantitative where possible.
+    - Task: ONE to TWO sentences clearly explaining my specific responsibilities or objectives in this situation. Focus on what I needed to accomplish.
+    - Action: A BULLETED LIST of specific steps I took, focusing on MY individual contribution even in team settings. Include 4-6 concrete actions. Feel free to extrapolate reasonable details based on the information provided.
+    - Result: EXACTLY THREE sentences quantifying the positive outcomes where possible and linking them directly to my actions. The first sentence should focus on immediate impacts, the second on metrics or quantifiable outcomes, and the third on longer-term or broader implications.
     
     ${contextInfo.instructions}
     ${contextInfo.audience}`;
     
-    // Include a selection of feedback entries as context
+    // Include a selection of feedback entries as context - up to 40 entries for more context
     const feedbackExamples = getFeedbackExamples(parsedData, interactionType);
     
     // Add custom prompt if provided
     const customPromptText = customPrompt ? `\n\nAdditional context and instructions: ${customPrompt}` : "";
     
-    // Output format instructions - JSON format
+    // Output format instructions - JSON format with example
     const outputFormatInstructions = getOutputFormatInstructions();
     
     // Combine all components into the final prompt
@@ -52,8 +52,8 @@ function getInteractionContext(interactionType) {
     // Match the interaction types from the HTML dropdown
     switch(interactionType) {
         // Story Collections
-        case 'top5':
-            instructions = `Generate my top 5 most impactful STAR stories based on the feedback data provided. 
+        case 'top10':
+            instructions = `Generate my top 10 most impactful STAR stories based on the feedback data provided. 
             These should be diverse, covering different skills and situations, and showcase my most significant achievements. 
             For each story, create a clear Situation, Task, Action, and Result that demonstrates substantial positive impact. 
             Select stories that would be most impressive in interview scenarios.`;
@@ -120,10 +120,9 @@ function getInteractionContext(interactionType) {
  * @returns {string} - Formatted feedback examples
  */
 function getFeedbackExamples(parsedData, interactionType) {
-    // Use more entries for top5 to give the AI more context
-    const feedbackCount = interactionType === 'top5' ? 
-        Math.min(10, parsedData.length) : 
-        Math.min(5, parsedData.length);
+    // Use up to 40 entries to provide comprehensive context
+    const maxEntries = 40;
+    const feedbackCount = Math.min(maxEntries, parsedData.length);
     
     return parsedData.slice(0, feedbackCount).map((entry, index) => {
         return `Feedback Entry #${index + 1}:
@@ -145,22 +144,42 @@ function getOutputFormatInstructions() {
     return `
     VERY IMPORTANT: Your response MUST be formatted as a valid JSON array of story objects. Each object should have the following structure:
     
+    - "situation": A single sentence describing the context (required)
+    - "task": 1-2 sentences describing my responsibility (required)
+    - "action": An ARRAY OF STRINGS where each string is one action step I took (required)
+    - "result": Exactly three sentences about the outcome (required)
+    
+    Here is an example of the exact JSON format expected:
+    
     [
       {
-        "situation": "Description of the situation...",
-        "task": "Description of the task...",
-        "action": "Description of the action taken...",
-        "result": "Description of the result achieved..."
+        "situation": "A Fortune 500 client's e-commerce platform was failing to meet compliance with new regional data privacy regulations, putting a $50M annual revenue stream at risk.",
+        "task": "As the lead software architect, I was tasked with redesigning the system to meet the regulation in under 8 weeks while ensuring zero downtime for customers.",
+        "action": [
+          "Analyzed legacy architecture and identified non-compliant components.",
+          "Collaborated with legal to translate regulatory needs into technical specs.",
+          "Designed region-specific services with data residency enforcement.",
+          "Refactored data storage for dynamic regional sharding.",
+          "Automated compliance checks in CI/CD pipeline.",
+          "Tested regional scenarios in parallel environments."
+        ],
+        "result": "The solution was delivered one week ahead of the deadline, avoiding potential fines and public exposure. We achieved 100% compliance certification across all impacted regions. Additionally, customer trust scores in post-deployment surveys rose by 12%, improving brand reputation."
       },
       {
-        "situation": "...",
-        "task": "...",
-        "action": "...",
-        "result": "..."
+        "situation": "An internal analytics platform used across multiple business units was slow, outdated, and underutilized, costing over $2M annually with little executive support to maintain it.",
+        "task": "I was brought in to assess and redesign the platform to justify its continuation or recommend decommissioning.",
+        "action": [
+          "Interviewed stakeholders to uncover needs and pain points.",
+          "Evaluated usage patterns to find high-impact areas.",
+          "Redesigned using serverless cloud architecture to cut idle costs.",
+          "Automated data ingestion with Azure Data Factory.",
+          "Built role-based dashboards for key business units."
+        ],
+        "result": "The new platform reduced infrastructure costs by 65% and improved processing time by 80%. User adoption increased by 3x within the first quarter, with all departments integrating the dashboards into their monthly reporting. Ultimately, the project delivered a $1.2M net savings in the first year and became a reference model for future internal tools."
       }
     ]
     
-    DO NOT include any explanations, introductions, or text outside of this JSON array. The response should be parseable by JSON.parse() without any modifications.`;
+    DO NOT include any explanations, introductions, or text outside of this JSON array. The response should be directly parseable by JSON.parse() without any modifications.`;
 }
 
 module.exports = {

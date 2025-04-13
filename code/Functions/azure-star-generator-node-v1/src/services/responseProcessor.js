@@ -75,10 +75,33 @@ function parseAIResponseText(responseText) {
         
         // If we have all four components, add as a valid story
         if (situationMatch && taskMatch && actionMatch && resultMatch) {
+            // Extract action items as an array by looking for bullet points or numbered lists
+            let actionText = actionMatch[1].trim();
+            let actionItems = [];
+            
+            // Try to split by bullet points (•, -, *, etc.) or numbered items
+            const bulletMatches = actionText.match(/(?:^|\n)[\s]*[•\-\*\d+\.\)]\s*(.*?)(?=(?:^|\n)[\s]*[•\-\*\d+\.\)]|$)/gs);
+            
+            if (bulletMatches && bulletMatches.length > 0) {
+                // Process each bullet point
+                actionItems = bulletMatches.map(bullet => {
+                    // Remove the bullet character or number and trim
+                    return bullet.replace(/^[\s]*[•\-\*\d+\.\)]\s*/, '').trim();
+                });
+            } else {
+                // If no bullet points found, try to split by sentences or semicolons
+                actionItems = actionText.split(/[\.;]\s+/).filter(item => item.trim().length > 0);
+            }
+            
+            // If we still don't have action items, use the whole text as one item
+            if (actionItems.length === 0) {
+                actionItems = [actionText];
+            }
+            
             const story = {
                 situation: situationMatch[1].trim(),
                 task: taskMatch[1].trim(),
-                action: actionMatch[1].trim(),
+                action: actionItems,
                 result: resultMatch[1].trim()
             };
             
@@ -97,18 +120,33 @@ function parseAIResponseText(responseText) {
 function validateStories(stories) {
     // Filter out invalid stories
     return stories.filter(story => {
-        return story && 
+        // Check if all required fields exist
+        const hasAllFields = story && 
             typeof story === 'object' &&
             typeof story.situation === 'string' && story.situation.trim() !== '' &&
             typeof story.task === 'string' && story.task.trim() !== '' &&
-            typeof story.action === 'string' && story.action.trim() !== '' &&
-            typeof story.result === 'string' && story.result.trim() !== '';
+            story.result && typeof story.result === 'string' && story.result.trim() !== '';
+        
+        // Check if action is an array or can be converted to one
+        let validAction = false;
+        if (Array.isArray(story.action)) {
+            validAction = story.action.length > 0 && 
+                          story.action.every(item => typeof item === 'string' && item.trim() !== '');
+        } else if (typeof story.action === 'string' && story.action.trim() !== '') {
+            // Convert string to single-item array if needed
+            story.action = [story.action];
+            validAction = true;
+        }
+        
+        return hasAllFields && validAction;
     }).map(story => {
         // Normalize text in each field
         return {
             situation: normalizeText(story.situation),
             task: normalizeText(story.task),
-            action: normalizeText(story.action),
+            action: Array.isArray(story.action) 
+                ? story.action.map(normalizeText) 
+                : [normalizeText(story.action)],
             result: normalizeText(story.result)
         };
     });
