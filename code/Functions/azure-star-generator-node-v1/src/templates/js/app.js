@@ -13,11 +13,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up event listeners
     setupEventListeners();
     
-    // Load sample CSV data by default
-    loadSampleCSV().catch(error => {
-        console.error("Error loading sample CSV:", error);
-        // Don't show error to user since this is automatic initialization
-    });
+    // Set up drag and drop functionality
+    setupDragDropHandlers();
+    
+    // Load sample CSV data by default if toggle is checked
+    if (elements.useSampleDataToggle.checked) {
+        loadSampleCSV().catch(error => {
+            console.error("Error loading sample CSV:", error);
+            // Don't show error to user since this is automatic initialization
+        });
+    }
     
     console.log('STAR Story Generator initialized.');
 });
@@ -41,19 +46,26 @@ function setupEventListeners() {
         if (file) {
             updateFileInfo(file.name + " (Your File)");
             readCSVFile(file).catch(error => showError(error.message));
+            // Uncheck sample data toggle when user uploads their own file
+            elements.useSampleDataToggle.checked = false;
         } else {
             updateFileInfo('No file selected - Sample data will be used');
             window.AppState.csvData = null;
+            // Re-check sample data toggle if no file
+            elements.useSampleDataToggle.checked = true;
         }
     });
     
-    // Handle "Use sample data" button click
-    const useSampleBtn = getElement('useSampleBtn');
-    if (useSampleBtn) {
-        useSampleBtn.addEventListener('click', function() {
+    // Handle sample data toggle change
+    elements.useSampleDataToggle.addEventListener('change', function() {
+        if (this.checked && !window.AppState.csvData) {
+            // If toggle is checked and no CSV data loaded yet, load sample data
             loadSampleCSV().catch(error => showError(error.message));
-        });
-    }
+        } else if (!this.checked && !elements.csvFileInput.files[0]) {
+            // If toggle unchecked and no file selected, show warning
+            updateFileInfo('No file selected - Please upload a CSV file');
+        }
+    });
     
     // Handle form submission
     elements.feedbackForm.addEventListener('submit', handleFormSubmit);
@@ -70,7 +82,6 @@ function setupEventListeners() {
             updateStoryView();
         }
     });
-    
     
     // Copy functionality
     elements.copyBtn.addEventListener('click', copyCurrentStoryToClipboard);
@@ -96,11 +107,17 @@ async function handleFormSubmit(e) {
     e.preventDefault();
     
     if (!window.AppState.csvData) {
-        // If no CSV data, load the sample data automatically
-        try {
-            await loadSampleCSV();
-        } catch (error) {
-            showError("Could not load sample data: " + error.message);
+        // If no CSV data and sample data toggle is checked, load the sample data
+        if (elements.useSampleDataToggle.checked) {
+            try {
+                await loadSampleCSV();
+            } catch (error) {
+                showError("Could not load sample data: " + error.message);
+                return;
+            }
+        } else {
+            // If no data and toggle is off, show error
+            showError("Please upload a CSV file or enable the sample data option");
             return;
         }
     }

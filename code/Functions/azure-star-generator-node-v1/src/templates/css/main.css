@@ -161,3 +161,46 @@ body {
         padding: 10px;
     }
 }
+
+/* Add these styles to the main.css file */
+
+.file-upload-label {
+    display: block;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border: 2px dashed #ccc;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.file-upload-label:hover,
+.file-upload-label.dragover {
+    background: #e9ecef;
+    border-color: var(--azure-blue);
+}
+
+.file-upload-info {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.form-check-input:checked {
+    background-color: var(--azure-blue);
+    border-color: var(--azure-blue);
+}
+
+/* Make the switch more visible */
+.form-switch .form-check-input {
+    width: 2.5em;
+    margin-left: -2.8em;
+}
+
+.form-switch .form-check-input:focus {
+    border-color: rgba(0, 120, 212, 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(0, 120, 212, 0.25);
+}

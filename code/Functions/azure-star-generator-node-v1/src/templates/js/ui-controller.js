@@ -11,6 +11,7 @@ let elements = {
     interactionType: null,
     customOptions: null,
     customPrompt: null,
+    useSampleDataToggle: null,  // Added this new element
     
     // Status elements
     fileInfo: null,
@@ -53,6 +54,7 @@ function initUI() {
     elements.interactionType = getElement('interactionType');
     elements.customOptions = getElement('customOptions');
     elements.customPrompt = getElement('customPrompt');
+    elements.useSampleDataToggle = getElement('useSampleData'); // Initialize the new toggle element
     
     // Status elements
     elements.fileInfo = getElement('fileInfo');

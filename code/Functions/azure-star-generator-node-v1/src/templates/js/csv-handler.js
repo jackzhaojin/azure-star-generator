@@ -29,6 +29,65 @@ function readCSVFile(file) {
 }
 
 /**
+ * Set up drag and drop handlers for the file upload area
+ */
+function setupDragDropHandlers() {
+    const fileUploadArea = document.querySelector('.file-upload-label');
+    if (!fileUploadArea) return;
+    
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    // Highlight drop area when file is dragged over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    // Handle dropped files
+    fileUploadArea.addEventListener('drop', handleDrop, false);
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    function highlight() {
+        fileUploadArea.style.backgroundColor = '#e9ecef';
+        fileUploadArea.style.borderColor = 'var(--azure-blue)';
+    }
+    
+    function unhighlight() {
+        fileUploadArea.style.backgroundColor = '';
+        fileUploadArea.style.borderColor = '';
+    }
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        
+        if (file && file.type === 'text/csv' || file.name.endsWith('.csv')) {
+            // Update the file input element to reflect the dropped file
+            elements.csvFileInput.files = dt.files;
+            
+            // Update UI and process the file
+            updateFileInfo(file.name + " (Your File)");
+            readCSVFile(file).catch(error => showError(error.message));
+            
+            // Uncheck sample data toggle when a file is dropped
+            elements.useSampleDataToggle.checked = false;
+        } else {
+            showError('Please upload a CSV file.');
+        }
+    }
+}
+
+/**
  * Load sample CSV data from the Azure Blob Storage
  * @returns {Promise} - Promise resolving when sample data is loaded
  */
@@ -53,6 +112,11 @@ async function loadSampleCSV() {
         updateFileInfo('Sample CSV (UX Designer Feedback)');
         window.AppState.csvData = csvData;
         
+        // Make sure the sample data toggle is checked
+        if (elements.useSampleDataToggle) {
+            elements.useSampleDataToggle.checked = true;
+        }
+        
         console.log("Sample CSV loaded successfully", csvData.substring(0, 100) + "...");
         
         return csvData;
@@ -68,7 +132,16 @@ async function loadSampleCSV() {
  */
 async function processCSVData() {
     if (!window.AppState.csvData) {
-        throw new Error('No CSV data available for processing.');
+        // Check if sample data should be used
+        if (elements.useSampleDataToggle && elements.useSampleDataToggle.checked) {
+            try {
+                await loadSampleCSV();
+            } catch (error) {
+                throw new Error('No CSV data available for processing and failed to load sample: ' + error.message);
+            }
+        } else {
+            throw new Error('No CSV data available for processing. Please upload a CSV file or enable sample data.');
+        }
     }
     
     console.log("Sending CSV data for processing...");
