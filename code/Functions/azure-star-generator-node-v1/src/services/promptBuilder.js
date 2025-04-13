@@ -13,7 +13,7 @@
 function buildPrompt(parsedData, interactionType, customPrompt) {
     // Get interaction-specific context based on dropdown selection
     const contextInfo = getInteractionContext(interactionType);
-    
+
     // Base prompt with STAR structure guidance
     const basePrompt = `You are an expert in crafting professional STAR (Situation, Task, Action, Result) stories. 
     Create compelling and authentic narratives based on the following feedback data that I've received.
@@ -23,19 +23,22 @@ function buildPrompt(parsedData, interactionType, customPrompt) {
     - Task: ONE to TWO sentences clearly explaining my specific responsibilities or objectives in this situation. Focus on what I needed to accomplish.
     - Action: A BULLETED LIST of specific steps I took, focusing on MY individual contribution even in team settings. Include 4-6 concrete actions. Feel free to extrapolate reasonable details based on the information provided.
     - Result: EXACTLY THREE sentences quantifying the positive outcomes where possible and linking them directly to my actions. The first sentence should focus on immediate impacts, the second on metrics or quantifiable outcomes, and the third on longer-term or broader implications.
-    
+
+    IMPORTANT: Each story must strictly adhere to this structure. Do not deviate from the format or omit any required elements. Ensure that the Situation, Task, Action, and Result are clearly distinct and follow the specified guidelines.
+    Guidelines needs to be extrapolated, for example, if it's a sales topic we need to talk about revenue. If it's about technical we need to focus on result for a technical.
+
     ${contextInfo.instructions}
     ${contextInfo.audience}`;
-    
+
     // Include a selection of feedback entries as context - up to 40 entries for more context
     const feedbackExamples = getFeedbackExamples(parsedData, interactionType);
-    
+
     // Add custom prompt if provided
     const customPromptText = customPrompt ? `\n\nAdditional context and instructions: ${customPrompt}` : "";
-    
+
     // Output format instructions - JSON format with example
     const outputFormatInstructions = getOutputFormatInstructions();
-    
+
     // Combine all components into the final prompt
     return `${basePrompt}\n\n${feedbackExamples}${customPromptText}\n\n${outputFormatInstructions}`;
 }
@@ -48,66 +51,60 @@ function buildPrompt(parsedData, interactionType, customPrompt) {
 function getInteractionContext(interactionType) {
     let instructions = '';
     let audience = '';
-    
     // Match the interaction types from the HTML dropdown
     switch(interactionType) {
         // Story Collections
-        case 'top10':
-            instructions = `Generate my top 10 most impactful STAR stories based on the feedback data provided. 
-            These should be diverse, covering different skills and situations, and showcase my most significant achievements. 
-            For each story, create a clear Situation, Task, Action, and Result that demonstrates substantial positive impact. 
-            Select stories that would be most impressive in interview scenarios.`;
+        case 'top5':
+            instructions = `Guideline: Select the top 5 STAR stories that represent a diverse range of my skills and experiences. 
+            Prioritize stories that demonstrate versatility, adaptability, and a balance of technical, leadership, and interpersonal skills. 
+            Ensure each story is unique and highlights a different aspect of my professional journey.`;
             break;
             
         case 'leadership':
-            instructions = `Generate STAR stories that highlight my leadership and management abilities. 
-            Focus on instances where I led teams, influenced stakeholders, made difficult decisions, resolved conflicts, 
-            or developed other team members. Include examples that demonstrate strategic thinking, emotional intelligence, 
-            delegation, motivation, and other key leadership competencies.`;
+            instructions = `Guideline: Focus on STAR stories that emphasize my ability to lead and inspire others. 
+            Highlight situations where I drove organizational change, mentored team members, or navigated complex challenges 
+            requiring strategic decision-making. Include examples that showcase my vision, resilience, and ability to influence outcomes.`;
             break;
             
         case 'technical':
-            instructions = `Generate STAR stories that showcase my technical expertise and problem-solving abilities. 
-            Focus on instances where I solved complex technical challenges, implemented innovative solutions, 
-            demonstrated deep expertise in specific technologies, or improved systems/processes through technical means. 
-            Include quantifiable results where possible.`;
+            instructions = `Guideline: Generate STAR stories that delve into my technical problem-solving and innovation. 
+            Highlight scenarios where I tackled cutting-edge challenges, introduced groundbreaking solutions, or optimized 
+            systems for efficiency and scalability. Focus on technical depth, creativity, and measurable results.`;
             break;
             
         case 'sales':
-            instructions = `Generate STAR stories that highlight my client success and sales achievements. 
-            Focus on instances where I won new business, strengthened client relationships, overcame objections, 
-            identified new opportunities, or delivered exceptional client value. Include specific metrics on revenue 
-            generated, deals closed, or client satisfaction improvements where possible.`;
+            instructions = `Guideline: Create STAR stories that showcase my ability to drive business growth and client success. 
+            Highlight achievements in exceeding sales targets, building long-term client relationships, and identifying 
+            untapped opportunities. Focus on metrics like revenue growth, client retention, and market expansion.`;
             break;
             
         // Audience-Focused Stories
         case 'colleague':
-            audience = `These stories will be shared with colleagues who are familiar with my industry and organization. 
-            The tone should be collaborative and emphasis should be on teamwork and mutual success. 
-            Include relevant technical details that a peer would understand and appreciate.`;
+            audience = `Guideline: These stories will be shared with colleagues to foster collaboration and mutual understanding. 
+            Emphasize teamwork, shared successes, and contributions to group objectives. Use a tone that is relatable and 
+            avoids overly formal language, while still being professional.`;
             break;
             
         case 'client':
-            audience = `These stories will be shared with potential clients to demonstrate my expertise and value. 
-            The tone should be professional and confident but not boastful. Focus on client outcomes and benefits 
-            rather than internal processes. Use industry-appropriate language but avoid excessive jargon.`;
+            audience = `Guideline: These stories will be shared with clients to build trust and credibility. 
+            Focus on delivering value, solving client-specific challenges, and achieving measurable outcomes. 
+            Use a tone that is client-centric, emphasizing benefits and results over internal processes.`;
             break;
             
         case 'employer':
-            audience = `These stories will be shared in job interviews or performance reviews. 
-            The tone should be achievement-oriented and demonstrate my unique value proposition. 
-            Each story should clearly highlight skills relevant to potential employers and include 
-            quantifiable results wherever possible.`;
+            audience = `Guideline: These stories will be shared with potential employers to highlight my unique qualifications. 
+            Focus on achievements that align with the job role, showcasing my ability to deliver results and exceed expectations. 
+            Use a tone that is confident and emphasizes my professional growth and impact.`;
             break;
             
         case 'custom':
             // For custom prompts, we rely on the additional context provided by the user
-            instructions = 'Generate professional STAR stories based on the additional context provided.';
+            instructions = 'Generate STAR stories tailored to the specific context and instructions provided.';
             break;
             
         default:
             // Default case for any new options added in the future
-            instructions = `Generate professional STAR stories tailored for the "${interactionType}" context.`;
+            instructions = `Generate STAR stories customized for the "${interactionType}" context, ensuring relevance and impact.`;
     }
     
     return { instructions, audience };
