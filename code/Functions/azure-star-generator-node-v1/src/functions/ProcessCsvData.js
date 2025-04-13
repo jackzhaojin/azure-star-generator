@@ -44,48 +44,79 @@ app.http('ProcessCsvData', {
 
 // Function to parse CSV data
 function parseCSV(csvData) {
-    // Simple CSV parser (in production, you might want to use a library like PapaParse)
+    // Simple CSV parser with improved handling for real-world CSV data
     const lines = csvData.split('\n');
+    
+    // Extract headers from the first line
     const headers = lines[0].split(',').map(header => header.trim());
     
     const results = [];
     
+    // Track current row data
+    let currentRow = null;
+    let isValidRow = false;
+    
+    // Process each line starting from line 1 (after headers)
     for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue; // Skip empty lines
         
         const values = lines[i].split(',');
-        const row = {};
         
-        // Handle cases where values might contain commas within quotes
-        let tempValues = [];
-        let inQuotes = false;
-        let currentValue = '';
-        
-        for (const value of values) {
-            if (inQuotes) {
-                currentValue += ',' + value;
-                if (value.endsWith('"')) {
-                    inQuotes = false;
-                    tempValues.push(currentValue.slice(1, -1)); // Remove quotes
-                    currentValue = '';
+        // Check if this is a complete row with all expected columns
+        if (values.length >= headers.length && values[0].trim() !== '') {
+            // If we were processing a previous row, add it to results
+            if (currentRow !== null && isValidRow) {
+                results.push(currentRow);
+            }
+            
+            // Start a new row
+            currentRow = {};
+            isValidRow = true;
+            
+            // Process each column
+            for (let j = 0; j < headers.length; j++) {
+                const header = headers[j];
+                let value = values[j] ? values[j].trim() : '';
+                
+                // Handle quoted values that might span multiple lines
+                if (value.startsWith('"') && !value.endsWith('"') && value.length > 1) {
+                    // Value starts with a quote but doesn't end with one
+                    let quotedValue = value;
+                    let k = j + 1;
+                    
+                    // Continue reading until we find the closing quote
+                    while (k < values.length) {
+                        quotedValue += ',' + values[k];
+                        if (values[k].endsWith('"')) {
+                            break;
+                        }
+                        k++;
+                    }
+                    
+                    // If we found a closing quote, use the complete value
+                    if (k < values.length) {
+                        value = quotedValue.slice(1, -1); // Remove quotes
+                        j = k; // Skip the processed columns
+                    }
+                } else if (value.startsWith('"') && value.endsWith('"') && value.length > 1) {
+                    // Simple quoted value
+                    value = value.slice(1, -1); // Remove quotes
                 }
-            } else if (value.startsWith('"') && !value.endsWith('"')) {
-                inQuotes = true;
-                currentValue = value;
-            } else {
-                tempValues.push(value);
+                
+                currentRow[header] = value;
+            }
+        } else if (currentRow !== null) {
+            // This is likely a continuation of data from the previous row
+            // For simplicity, we'll append this to the Actual Feedback field if it exists
+            if (currentRow['Actual Feedback']) {
+                currentRow['Actual Feedback'] += ' ' + lines[i].trim();
             }
         }
-        
-        // If we're still in quotes, we have an issue with the CSV format
-        if (!inQuotes) {
-            headers.forEach((header, index) => {
-                if (index < values.length) {
-                    row[header] = values[index].trim();
-                }
-            });
-            results.push(row);
-        }
+    }
+    
+    // Add the last row if it exists
+    if (currentRow !== null && isValidRow) {
+        results.push(currentRow);
     }
     
     return results;
