@@ -12,11 +12,15 @@ let elements = {
     customOptions: null,
     customPrompt: null,
     useSampleDataToggle: null,  // Added this new element
-    
+    generateBtn: null,
+
     // Status elements
     fileInfo: null,
     loadingSpinner: null,
-    
+    errorContainer: null,
+    errorMessage: null,
+    errorClose: null,
+
     // Container elements
     resultContainer: null,
     resultContainerMobile: null,
@@ -55,11 +59,15 @@ function initUI() {
     elements.customOptions = getElement('customOptions');
     elements.customPrompt = getElement('customPrompt');
     elements.useSampleDataToggle = getElement('useSampleData'); // Initialize the new toggle element
-    
+    elements.generateBtn = getElement('generateBtn');
+
     // Status elements
     elements.fileInfo = getElement('fileInfo');
     elements.loadingSpinner = getElement('loadingSpinner');
-    
+    elements.errorContainer = getElement('errorContainer');
+    elements.errorMessage = getElement('errorMessage');
+    elements.errorClose = getElement('errorClose');
+
     // Container elements
     elements.resultContainer = getElement('resultContainer');
     elements.resultContainerMobile = getElement('resultContainerMobile');
@@ -148,8 +156,38 @@ function updateAudienceLabels(interactionType) {
 function setLoadingState(isLoading) {
     if (isLoading) {
         elements.loadingSpinner.style.display = 'block';
+        elements.generateBtn.disabled = true;
+        elements.generateBtn.style.cursor = 'not-allowed';
+        elements.generateBtn.textContent = 'Generating…';
     } else {
         elements.loadingSpinner.style.display = 'none';
+        elements.generateBtn.disabled = false;
+        elements.generateBtn.style.cursor = 'pointer';
+        elements.generateBtn.textContent = 'Generate Your Stories';
+    }
+}
+
+/**
+ * Show error message in UI banner
+ * @param {string} message - The error message to display
+ */
+function showError(message) {
+    console.error('Error:', message);
+    if (elements.errorContainer && elements.errorMessage) {
+        elements.errorMessage.textContent = message;
+        elements.errorContainer.style.display = 'block';
+
+        // Scroll to the error
+        scrollToElement(elements.errorContainer);
+    }
+}
+
+/**
+ * Hide error message banner
+ */
+function hideError() {
+    if (elements.errorContainer) {
+        elements.errorContainer.style.display = 'none';
     }
 }
 
@@ -159,28 +197,33 @@ function setLoadingState(isLoading) {
 async function copyCurrentStoryToClipboard() {
     const currentStory = getCurrentStory();
     if (!currentStory) return;
-    
+
     const storyText = formatStarStory(currentStory);
-    
+
     try {
         await copyToClipboard(storyText);
-        
+
         // Update both desktop and mobile buttons
-        const originalText = elements.copyBtn.textContent;
-        elements.copyBtn.textContent = 'Copied!';
-        
+        const originalHTML = elements.copyBtn.innerHTML;
+        elements.copyBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
+        elements.copyBtn.classList.add('btn-success');
+        elements.copyBtn.classList.remove('btn-primary');
+
         // Update mobile button if it exists
         if (elements.copyBtnMobile) {
             elements.copyBtnMobile.textContent = 'Copied!';
         }
-        
+
         setTimeout(() => {
-            elements.copyBtn.textContent = originalText;
+            elements.copyBtn.innerHTML = originalHTML;
+            elements.copyBtn.classList.remove('btn-success');
+            elements.copyBtn.classList.add('btn-primary');
             if (elements.copyBtnMobile) {
-                elements.copyBtnMobile.textContent = originalText;
+                elements.copyBtnMobile.textContent = 'Copy';
             }
-        }, 2000);
+        }, 1500);
     } catch (err) {
         console.error('Could not copy text: ', err);
+        showError('Failed to copy to clipboard. Please try again.');
     }
 }

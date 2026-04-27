@@ -50,6 +50,16 @@ body {
     color: white;
 }
 
+.btn-azure:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-azure:disabled:hover {
+    background-color: #ccc;
+}
+
 .feedback-input {
     min-height: 150px;
 }
@@ -74,8 +84,11 @@ body {
 }
 
 .copy-btn {
-    float: right;
     font-size: 0.9rem;
+}
+
+#copyBtn {
+    white-space: nowrap;
 }
 
 .file-upload {
@@ -203,4 +216,40 @@ body {
 .form-switch .form-check-input:focus {
     border-color: rgba(0, 120, 212, 0.25);
     box-shadow: 0 0 0 0.25rem rgba(0, 120, 212, 0.25);
+}
+
+/* Error banner styles */
+.error-banner {
+    background-color: #dc3545;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    animation: slideDown 0.3s ease-out;
+}
+
+.error-banner .error-content {
+    flex: 1;
+}
+
+.error-banner .btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+.error-banner .btn-close-white:hover {
+    opacity: 1;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

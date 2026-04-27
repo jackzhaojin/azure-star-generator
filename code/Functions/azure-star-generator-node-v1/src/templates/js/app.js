@@ -88,6 +88,11 @@ function setupEventListeners() {
     
     // Regenerate functionality
     elements.regenerateBtn.addEventListener('click', confirmRegeneration);
+
+    // Error close button
+    if (elements.errorClose) {
+        elements.errorClose.addEventListener('click', hideError);
+    }
 }
 
 /**
@@ -105,7 +110,10 @@ function confirmRegeneration() {
  */
 async function handleFormSubmit(e) {
     e.preventDefault();
-    
+
+    // Hide any existing error
+    hideError();
+
     if (!window.AppState.csvData) {
         // If no CSV data and sample data toggle is checked, load the sample data
         if (elements.useSampleDataToggle.checked) {

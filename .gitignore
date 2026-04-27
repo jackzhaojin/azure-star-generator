@@ -101,3 +101,5 @@ local.settings.json
 __blobstorage__
 __queuestorage__
 __azurite_db*__.json
+# Synced by continuous-agent for build_target=existing (do not commit)
+/.claude/

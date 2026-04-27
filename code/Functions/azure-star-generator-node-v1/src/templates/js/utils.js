@@ -40,11 +40,14 @@ function getElementsBySelector(selector) {
 
 /**
  * Show an error message to the user
+ * NOTE: This is now implemented in ui-controller.js with a visual banner
+ * Keeping this stub for backwards compatibility with any direct calls
  * @param {string} message - The error message to display
  */
 function showError(message) {
     console.error('Error:', message);
-    alert('Error: ' + message);
+    // This will be handled by ui-controller.js showError()
+    // which is loaded after utils.js, so it will override this
 }
 
 /**

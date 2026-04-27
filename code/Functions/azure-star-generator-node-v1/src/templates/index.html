@@ -32,7 +32,18 @@
                 
                 <div class="star-container">
                     <h2 class="mb-4">Upload Your Feedback</h2>
-                    
+
+                    <!-- Error container -->
+                    <div id="errorContainer" class="error-banner" data-testid="error" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="error-content">
+                                <strong>Error:</strong>
+                                <span id="errorMessage"></span>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white" id="errorClose" aria-label="Close"></button>
+                        </div>
+                    </div>
+
                     <form id="feedbackForm">
                         <div class="mb-4">
                             <label class="form-label">Upload your feedback CSV file</label>
@@ -85,14 +96,14 @@
                             <textarea class="form-control" id="customPrompt" rows="3" placeholder="Example: Generate a story for a conference presentation about a time I solved a complex technical challenge..."></textarea>
                         </div>
                         
-                        <button type="submit" class="btn btn-azure w-100">Generate Your Stories</button>
+                        <button type="submit" class="btn btn-azure w-100" id="generateBtn">Generate Your Stories</button>
                     </form>
-                    
-                    <div class="loading-spinner" id="loadingSpinner">
+
+                    <div class="loading-spinner" id="loadingSpinner" data-testid="loading">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="mt-2">Analyzing your feedback and crafting your stories...</p>
+                        <p class="mt-2">Generating stories…</p>
                     </div>
                 </div>
             </div>
@@ -179,9 +190,16 @@
                     
                 <!-- The result container for medium and larger displays -->
                 <div class="star-container result-container" id="resultContainer">
-                    <h2 class="mb-3">Your Professional Stories</h2>
-                    <p class="text-muted" id="audienceLabel">Stories tailored for your chosen audience</p>
-                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="mb-1">Your Professional Stories</h2>
+                            <p class="text-muted mb-0" id="audienceLabel">Stories tailored for your chosen audience</p>
+                        </div>
+                        <button class="btn btn-primary" id="copyBtn">
+                            <i class="bi bi-clipboard"></i> Copy Story
+                        </button>
+                    </div>
+
                     <div class="story-nav mb-4">
                         <button class="btn btn-sm btn-outline-secondary" id="prevStory">Previous</button>
                         <div class="story-pagination">
@@ -189,32 +207,34 @@
                         </div>
                         <button class="btn btn-sm btn-outline-secondary" id="nextStory">Next</button>
                     </div>
-                    
+
                     <div id="storyContent">
                         <div class="star-section">
                             <h3>Situation</h3>
                             <p id="situationText"></p>
                         </div>
-                        
+
                         <div class="star-section">
                             <h3>Task</h3>
                             <p id="taskText"></p>
                         </div>
-                        
+
                         <div class="star-section">
                             <h3>Action</h3>
                             <div id="actionText"></div>
                         </div>
-                        
+
                         <div class="star-section">
                             <h3>Result</h3>
                             <p id="resultText"></p>
                         </div>
                     </div>
-                    
+
                     <div class="d-flex justify-content-between mt-4">
-                        <button class="btn btn-outline-primary" id="regenerateBtn">Regenerate</button>
-                        <button class="btn btn-outline-secondary" id="copyBtn">Copy Story</button>
+                        <button class="btn btn-outline-primary" id="regenerateBtn">Regenerate All</button>
+                        <div class="text-muted small">
+                            <i class="bi bi-info-circle"></i> Use the "Copy Story" button above to copy this story to your clipboard
+                        </div>
                     </div>
                 </div>
             </div>
