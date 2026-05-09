@@ -1,0 +1,46 @@
+name: CI — Build & Test
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - 'code/Functions/azure-star-generator-node-v1/**'
+      - '.github/workflows/ci.yml'
+
+env:
+  FUNCTIONS_DIR: 'code/Functions/azure-star-generator-node-v1'
+  NODE_VERSION: '20.x'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.FUNCTIONS_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.FUNCTIONS_DIR }}
+        run: npm ci
+
+      - name: Build (if present)
+        working-directory: ${{ env.FUNCTIONS_DIR }}
+        run: npm run build --if-present
+
+      - name: Lint (if present)
+        working-directory: ${{ env.FUNCTIONS_DIR }}
+        run: npm run lint --if-present
+
+      - name: Test (if present)
+        working-directory: ${{ env.FUNCTIONS_DIR }}
+        run: npm test --if-present

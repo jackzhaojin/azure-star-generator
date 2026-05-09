@@ -1,5 +1,8 @@
 # Azure STAR Generator
 
+[![CI](https://github.com/jackzhaojin/azure-star-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/jackzhaojin/azure-star-generator/actions/workflows/ci.yml)
+[![Deploy](https://github.com/jackzhaojin/azure-star-generator/actions/workflows/deploy.yml/badge.svg)](https://github.com/jackzhaojin/azure-star-generator/actions/workflows/deploy.yml)
+
 The **Azure STAR Generator** is a professional storytelling tool designed to help users craft compelling STAR (Situation, Task, Action, Result) stories. It leverages Azure OpenAI services to generate structured and impactful narratives based on user-provided feedback data.
 
 ## Features
