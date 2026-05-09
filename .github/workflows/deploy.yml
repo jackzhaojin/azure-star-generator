@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_NAME: '<APP_NAME_HERE>'
+  AZURE_FUNCTIONAPP_NAME: 'azure-star-generator-node-v1'
   AZURE_FUNCTIONAPP_PACKAGE_PATH: 'code/Functions/azure-star-generator-node-v1'
   NODE_VERSION: '20.x'
 

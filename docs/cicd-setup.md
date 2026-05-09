@@ -12,17 +12,11 @@ This document is the one-time setup checklist for `deploy.yml`.
 - The `az` CLI installed locally (for Azure AD setup)
 - The `gh` CLI installed locally (optional but easier than the GitHub web UI for secrets)
 
-## Step 1 — Identify Your Function App Name
+## Step 1 — Function App Name (already configured)
 
-**TODO:** Replace `<APP_NAME_HERE>` in `.github/workflows/deploy.yml` with your actual Azure Function App name.
+The deploy workflow is wired to Function App `azure-star-generator-node-v1` in resource group `Jack-2025-Story-RG` (default host `azure-star-generator-node-v1.azurewebsites.net`).
 
-The Function App name is the resource name you see in the Azure Portal (e.g., `azure-star-generator-prod`). It's also the subdomain in your function's URL: `https://<APP_NAME>.azurewebsites.net`.
-
-Once you have the name:
-1. Open `.github/workflows/deploy.yml`
-2. Find line 11: `AZURE_FUNCTIONAPP_NAME: '<APP_NAME_HERE>'`
-3. Replace `<APP_NAME_HERE>` with your actual Function App name
-4. Commit the change
+If you ever need to retarget a different Function App, update `AZURE_FUNCTIONAPP_NAME` in `.github/workflows/deploy.yml` to the new resource name. The name is the subdomain in the function's URL: `https://<APP_NAME>.azurewebsites.net`.
 
 ## Step 2 — Create an Azure AD App Registration
 
